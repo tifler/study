@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
-
-#define ARRAY_SIZE(a)                   (sizeof(a) / sizeof(a[0]))
+#include "common.h"
 
 static int *merge(int *a, int ca, int *b, int cb)
 {
@@ -33,10 +34,7 @@ static int *merge(int *a, int ca, int *b, int cb)
     memcpy(a, c, sizeof(int) * count);
     free(c);
 
-    for (ia = 0; ia < count; ia++) {
-        printf("%d ", a[ia]);
-    }
-    printf("\n");
+	show_entry(a, count);
 
     return a;
 }
@@ -49,36 +47,25 @@ static int *recursive_merge_sort(int *array, int count)
         return array;
 
     a = recursive_merge_sort(&array[0], count / 2);
+	show_entry(a, count / 2);
     b = recursive_merge_sort(&array[count / 2], count - (count / 2));
+	show_entry(b, count - (count / 2));
 
     return merge(a, count / 2, b, count - (count / 2));
 }
 
-static void merge_sort_ascending(int array[], int count)
-{
-    int i, j;
-    int selectedValue;
-    int selectedIndex;
+/***************************************************************************/
 
-    for (i = 0; i < count; i++) {
-        printf("%d ", array[i]);
-    }
-    printf("\n");
+void merge_sort_ascending(int *array, int count)
+{
+    printf("----------------------------\n");
+	printf("Merge sort\n");
+	show_entry(array, count);
     printf("----------------------------\n");
 
     recursive_merge_sort(array, count);
 
     printf("----------------------------\n");
-    for (i = 0; i < count; i++) {
-        printf("%d ", array[i]);
-    }
-    printf("\n");
-}
-
-static int table[] = { 10, 25, 3, 100, 28, 59, 44, 30, 79, 1, 0 };
-
-int main(void)
-{
-    merge_sort_ascending(table, ARRAY_SIZE(table));
-    return 0;
+	show_entry(array, count);
+    printf("----------------------------\n");
 }

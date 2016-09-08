@@ -18,5 +18,7 @@ void insert_sort_ascending(int *, int);
 void merge_sort_ascending(int *, int);
 
 void show_entry(int *array, int count);
+extern int compareCount;
+extern int actionCount;
 
 #endif  /*__COMMON_H__*/

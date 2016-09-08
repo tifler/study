@@ -3,17 +3,14 @@
 
 void insert_sort_ascending(int *array, int count)
 {
-    int i, j;
+    int i;
     int valueToInsert;
     int holePosition;
-    int move, compare;
 
-    move = compare = 0;
-
-    for (i = 0; i < count; i++) {
-        printf("%d ", array[i]);
-    }
-    printf("\n");
+    printf("----------------------------\n");
+	printf("Insert sort\n");
+	show_entry(array, count);
+    printf("----------------------------\n");
 
     for (i = 1; i < count; i++) {
         valueToInsert = array[i];
@@ -21,22 +18,18 @@ void insert_sort_ascending(int *array, int count)
         while (holePosition > 0 && array[holePosition - 1] > valueToInsert) {
             array[holePosition] = array[holePosition - 1];
             holePosition--;
-            compare++;
-            move++;
+            compareCount++;
+            actionCount++;
+			show_entry(array, count);
         }
         array[holePosition] = valueToInsert;
-        move++;
+		actionCount++;
 
-        printf("Move=%d, Compare=%d\t", move, compare);
-
-        for (j = 0; j < count; j++) {
-            printf("%d ", array[j]);
-        }
-        printf("\n");
+        //printf("%4d: ", i + 1);
+		show_entry(array, count);
     }
 
-    for (i = 0; i < count; i++) {
-        printf("%d ", array[i]);
-    }
-    printf("\n");
+    printf("----------------------------\n");
+	show_entry(array, count);
+    printf("----------------------------\n");
 }
