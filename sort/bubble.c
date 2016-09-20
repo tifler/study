@@ -3,12 +3,12 @@
 
 void bubble_sort_ascending(int *array, int count)
 {
-    int i, j;
+    int i;
 	int last;
     int swapCount;
 
     printf("----------------------------\n");
-	printf("Bubble sort\n");
+	printf("Bubble sort(%d)\n", count);
     show_entry(array, count);
     printf("----------------------------\n");
 

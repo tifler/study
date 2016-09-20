@@ -24,15 +24,17 @@ int main(int argc, char **argv)
 {
 	int i;
     sort_func_t sorts[] = {
-		bubble_sort_ascending,
 		insert_sort_ascending,
+		bubble_sort_ascending,
 		select_sort_ascending,
 		merge_sort_ascending,
 	};
 
 	for (i = 0; i < ARRAY_SIZE(sorts); i++) {
-		memcpy(table, tableTemplate, ARRAY_SIZE(table));
-		sorts[i](table, ARRAY_SIZE(table));
+        compareCount = actionCount = 0;
+		memcpy(table, tableTemplate, sizeof(tableTemplate));
+		sorts[i](table, ARRAY_SIZE(tableTemplate));
+        printf("Compare=%d, Action=%d\n", compareCount, actionCount);
 	}
     return 0;
 }

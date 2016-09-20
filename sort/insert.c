@@ -8,7 +8,7 @@ void insert_sort_ascending(int *array, int count)
     int holePosition;
 
     printf("----------------------------\n");
-	printf("Insert sort\n");
+	printf("Insert sort(%d)\n", count);
 	show_entry(array, count);
     printf("----------------------------\n");
 

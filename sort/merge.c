@@ -19,20 +19,27 @@ static int *merge(int *a, int ca, int *b, int cb)
         else {
             c[ic++] = a[ia++];
         }
+        compareCount++;
+        actionCount++;
     }
 
     while (ia < ca) {
         c[ic++] = a[ia++];
+        compareCount++;
+        actionCount++;
     }
 
     while (ib < cb) {
         c[ic++] = b[ib++];
+        compareCount++;
+        actionCount++;
     }
 
     assert(ic == count);
 
     memcpy(a, c, sizeof(int) * count);
     free(c);
+    actionCount++;
 
 	show_entry(a, count);
 
@@ -59,7 +66,7 @@ static int *recursive_merge_sort(int *array, int count)
 void merge_sort_ascending(int *array, int count)
 {
     printf("----------------------------\n");
-	printf("Merge sort\n");
+	printf("Merge sort(%d)\n", count);
 	show_entry(array, count);
     printf("----------------------------\n");
 

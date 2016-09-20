@@ -8,7 +8,7 @@ void select_sort_ascending(int *array, int count)
     int selectedIndex;
 
     printf("----------------------------\n");
-	printf("Select sort\n");
+	printf("Select sort(%d)\n", count);
 	show_entry(array, count);
     printf("----------------------------\n");
 
@@ -27,10 +27,8 @@ void select_sort_ascending(int *array, int count)
             swap(array, i, selectedIndex);
 			compareCount++;
 			actionCount++;
+            show_entry(array, count);
 		}
-
-        printf("%4d: ", i + 1);
-		show_entry(array, count);
     }
 
     printf("----------------------------\n");
