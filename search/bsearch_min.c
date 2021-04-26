@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include "common.h"
 
+/*
+ * return found index or index of the lower bound which the key is in.
+ */
 int bsearch_min(const int *array, int count, int key)
 {
     printf("----------------------------\n");
