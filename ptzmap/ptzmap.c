@@ -2,6 +2,7 @@
 #include "ptzmap.h"
 #include "XDebug.h"
 
+#if	0
 /*
  * this equation is drived from an equation of finding the intersection
  * point of a plane and a line in the 3D cartesian coord-system.
@@ -38,6 +39,7 @@ void map_ptz_to_screen_3d(
 	dst->y = t * tmp.y;
 	dst->z = t * tmp.z;
 }
+#endif	/*0*/
 
 /*
  * this equation is drived from an equation of finding the intersection
@@ -55,9 +57,9 @@ void map_ptz_to_screen_3d(
  * [x, y, z] = [ r * x0 / z0, r * y0 / z0, r * z0 / z0]
  * [x, y, z] = [ r * x0 / z0, r * y0 / z0, r]
  */
-void map_ptz_to_screen(
+void map_ptz_to_screen_point(
 		const sct_point_sp_t *ptz, const sct_point_sp_t *src,
-		const sct_size_2d_t *size, double fov, sct_point_2d_t *dst)
+		const sct_size_2d_t *size, const fov_t *fov, sct_point_2d_t *dst)
 {
 	sct_point_ca_t tmpca;
 	sct_point_sp_t tmpsp;
@@ -74,34 +76,35 @@ void map_ptz_to_screen(
 	tmpsp.phi = src->phi - ptz->phi;
 	sct_spherical_to_cartesian(&tmpsp, &tmpca);
 
-	/* intersected point */
+	/* intersected point, tmp2d is on the 2D screen */
 	tmp2d.x = src->r * tmpca.x / tmpca.z;
 	tmp2d.y = src->r * tmpca.y / tmpca.z;
+	//DBG("src->r=%f, x=%f, y=%f\n", src->r, tmp2d.x, tmp2d.y);
 	// z = r;
 
 	/* scaled final result */
-	dst->x = (tmp2d.x / src->r) * (size->w / 2) / tan(fov / 2);
-	dst->y = (tmp2d.y / src->r) * (size->h / 2) / tan(fov / 2);
+	dst->x = (tmp2d.x / src->r) * (size->w / 2) / tan(fov->h / 2);
+	dst->y = (tmp2d.y / src->r) * (size->h / 2) / tan(fov->h / 2);
 	// w : h = y : y0
 	dst->y = size->w * dst->y / size->h;
 }
 
-void map_screen_to_ptz(
+void map_screen_to_ptz_point(
 		const sct_point_sp_t *ptz, const sct_point_2d_t *src,
-		const sct_size_2d_t *size, double fov, sct_point_sp_t *dst)
+		const sct_size_2d_t *size, const fov_t *fov, sct_point_sp_t *dst)
 {
 	sct_point_ca_t tmpca;
 
 	tmpca.x = src->x;
 	tmpca.y = src->y;
-	tmpca.z = size->w / (2 * tan(fov / 2));
+	tmpca.z = size->w / (2 * tan(fov->h / 2));
 	sct_cartesian_to_spherical(&tmpca, dst);
 
 	/*
 	 * Now dst points a point with assuming PTZ's theta and phi are all zero.
 	 * So we should rotate to actul direction.
 	 */
-	DBG("dst (r=%f, theta=%f, phi=%f)\n", dst->r, dst->theta, dst->phi);
+	//DBG("dst (r=%f, theta=%f, phi=%f)\n", dst->r, dst->theta, dst->phi);
 	dst->theta += ptz->theta;
 	dst->phi += ptz->phi;
 
@@ -115,13 +118,77 @@ void map_screen_to_ptz(
 /*
  * test the point's angles are in between ptz->center +/- fov angles
  */
-int is_point_in_fov(const sct_point_sp_t *ptz,
-		double fov, double w_div_h, const sct_point_sp_t *pt)
+int is_point_in_fov(
+		const sct_point_sp_t *ptz, const fov_t *fov, const sct_point_sp_t *pt)
 {
-	double vfov = fov / w_div_h;
-	return (((ptz->theta - fov / 2) <= pt->theta) &&
-		((ptz->theta + fov / 2) >= pt->theta) &&
-		((ptz->phi - vfov / 2) <= pt->phi) &&
-		((ptz->phi + vfov / 2) >= pt->phi));
+	return (((ptz->theta - fov->h / 2) <= pt->theta) &&
+		((ptz->theta + fov->h / 2) >= pt->theta) &&
+		((ptz->phi - fov->v / 2) <= pt->phi) &&
+		((ptz->phi + fov->v / 2) >= pt->phi));
+}
+
+void map_screen_to_ptz_rect(
+		const sct_point_sp_t *ptz, const rect_ca_t *src,
+		const sct_size_2d_t *size, const fov_t *fov, rect_sp_t *dst)
+{
+	sct_point_2d_t pt;
+
+	pt.x = src->lt.x;
+	pt.y = src->lt.y;
+	map_screen_to_ptz_point(ptz, &pt, size, fov, &dst->lt);
+
+	pt.x = src->rt.x;
+	pt.y = src->rt.y;
+	map_screen_to_ptz_point(ptz, &pt, size, fov, &dst->rt);
+
+	pt.x = src->lb.x;
+	pt.y = src->lb.y;
+	map_screen_to_ptz_point(ptz, &pt, size, fov, &dst->lb);
+
+	pt.x = src->rb.x;
+	pt.y = src->rb.y;
+	map_screen_to_ptz_point(ptz, &pt, size, fov, &dst->rb);
+}
+
+void map_ptz_to_screen_rect(
+		const sct_point_sp_t *ptz, const rect_sp_t *src,
+		const sct_size_2d_t *size, const fov_t *fov, rect_ca_t *dst)
+{
+	sct_point_2d_t pt;
+
+	map_ptz_to_screen_point(ptz, &src->lt, size, fov, &pt);
+	dst->lt.x = pt.x;
+	dst->lt.y = pt.y;
+
+	map_ptz_to_screen_point(ptz, &src->rt, size, fov, &pt);
+	dst->rt.x = pt.x;
+	dst->rt.y = pt.y;
+
+	map_ptz_to_screen_point(ptz, &src->lb, size, fov, &pt);
+	dst->lb.x = pt.x;
+	dst->lb.y = pt.y;
+
+	map_ptz_to_screen_point(ptz, &src->rb, size, fov, &pt);
+	dst->rb.x = pt.x;
+	dst->rb.y = pt.y;
+}
+
+void get_cover_rect(const rect_ca_t *src, rect_ca_t *dst)
+{
+	double left, right, top, bottom;
+
+	left = MIN(src->lt.x, src->lb.x);
+	top = MIN(src->lt.y, src->rt.y);
+	right = MAX(src->rt.x, src->rb.x);
+	bottom = MAX(src->lb.y, src->rb.y);
+
+	dst->lt.x = left;
+	dst->lt.y = top;
+	dst->rt.x = right;
+	dst->rt.y = top;
+	dst->lb.x = left;
+	dst->lb.y = bottom;
+	dst->rb.x = right;
+	dst->rb.y = bottom;
 }
 

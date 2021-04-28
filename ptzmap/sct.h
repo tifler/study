@@ -1,6 +1,14 @@
 #ifndef __SIMPLE_COORD_TRANSFORM_H__
 #define __SIMPLE_COORD_TRANSFORM_H__
 
+#include <stdint.h>
+
+#if (INTPTR_MAX == INT64_MAX)
+typedef double sct_float_t;
+#else
+typedef float sct_float_t;
+#endif	/*INTPTR_MAX == INT64_MAX*/
+
 typedef struct {
 	double w;
 	double h;
