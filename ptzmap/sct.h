@@ -30,8 +30,8 @@ typedef struct {
  * Used mathmatics notation not physics.
  *
  * r : r, radial distance
- * t : theta, azimuthal angle
- * p : phi, polar angle
+ * t : theta, polar angle
+ * p : phi, azimuthal angle
  */
 typedef struct {
 	double r;

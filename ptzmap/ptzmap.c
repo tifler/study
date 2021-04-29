@@ -173,22 +173,35 @@ void map_ptz_to_screen_rect(
 	dst->rb.y = pt.y;
 }
 
-void get_cover_rect(const rect_ca_t *src, rect_ca_t *dst)
+void get_cover_rect_ca(const rect_ca_t *src, rect_ca_t *dst)
 {
-	double left, right, top, bottom;
-
-	left = MIN(src->lt.x, src->lb.x);
-	top = MIN(src->lt.y, src->rt.y);
-	right = MAX(src->rt.x, src->rb.x);
-	bottom = MAX(src->lb.y, src->rb.y);
-
-	dst->lt.x = left;
-	dst->lt.y = top;
-	dst->rt.x = right;
-	dst->rt.y = top;
-	dst->lb.x = left;
-	dst->lb.y = bottom;
-	dst->rb.x = right;
-	dst->rb.y = bottom;
+	dst->lt.x = dst->lb.x = MIN(src->lt.x, src->lb.x);
+	dst->lt.y = dst->rt.y = MIN(src->lt.y, src->rt.y);
+	dst->rt.x = dst->rb.x = MAX(src->rt.x, src->rb.x);
+	dst->lb.y = dst->rb.y = MAX(src->lb.y, src->rb.y);
 }
 
+/*
+ * assume 1. two rect_ca_t has the same r.
+ *        2. lt.phi and lb.phi are equal.
+ *        3. lt.theta and rt.theta are equal.
+ */
+int do_intersect_rect_sp(const rect_sp_t *a, const rect_sp_t *b)
+{
+	return
+		MAX(0, MAX(a->lt.phi, b->lt.phi) - MIN(a->rt.phi, b->rt.phi)) &&
+		MAX(0, MAX(a->lb.theta, b->lb.theta) - MIN(a->lt.theta, b->lt.theta));
+}
+
+int get_intersect_rect_sp(const rect_sp_t *a, const rect_sp_t *b, rect_sp_t *r)
+{
+	if (!do_intersect_rect_sp(a, b))
+		return 0;
+
+	r->lt.phi = r->lb.phi = MAX(a->lt.phi, b->lt.phi);
+	r->lt.theta = r->lb.theta = MAX(a->lt.theta, b->lt.theta);
+	r->rt.phi = r->rb.phi = MIN(a->rt.phi, b->rt.phi);
+	r->rt.theta = r->rb.theta = MIN(a->rt.theta, b->rt.theta);
+
+	return 1;
+}
