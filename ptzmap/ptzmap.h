@@ -1,6 +1,7 @@
 #ifndef	__PTZMAP_H__
 #define	__PTZMAP_H__
 
+#include <math.h>
 #include "sct.h"
 
 #ifndef	MIN
@@ -10,6 +11,11 @@
 #ifndef	MAX
 #define	MAX(a, b)				((a) > (b) ? (a) : (b))
 #endif	/*MAX*/
+
+#define RAD2DEG(rad)			((rad) * 180.0 / M_PI)
+#define DEG2RAD(deg)			((deg) * M_PI / 180.0)
+
+/*****************************************************************************/
 
 typedef struct {
 	double h;
@@ -32,21 +38,30 @@ typedef struct {
 
 void map_ptz_to_screen_point(
 		const sct_point_sp_t *ptz, const sct_point_sp_t *src,
-		const sct_size_2d_t *size, const fov_t *fov, sct_point_2d_t *dst);
+		const sct_size_t *size, const fov_t *fov, int hflip, int vflip,
+		sct_point_ca_t *dst);
 
 void map_screen_to_ptz_point(
-		const sct_point_sp_t *ptz, const sct_point_2d_t *src,
-		const sct_size_2d_t *size, const fov_t *fov, sct_point_sp_t *dst);
+		const sct_point_sp_t *ptz, const sct_point_ca_t *src,
+		const sct_size_t *size, const fov_t *fov, sct_point_sp_t *dst);
 
 int is_point_in_fov(
 		const sct_point_sp_t *ptz, const fov_t *fov, const sct_point_sp_t *pt);
 
 void map_screen_to_ptz_rect(
 		const sct_point_sp_t *ptz, const rect_ca_t *src,
-		const sct_size_2d_t *size, const fov_t *fov, rect_sp_t *dst);
+		const sct_size_t *size, const fov_t *fov, rect_sp_t *dst);
 
 void map_ptz_to_screen_rect(
 		const sct_point_sp_t *ptz, const rect_sp_t *src,
-		const sct_size_2d_t *size, const fov_t *fov, rect_ca_t *dst);
+		const sct_size_t *size, const fov_t *fov, int hflip, int vflip,
+		rect_ca_t *dst);
+
+void get_cover_rect_ca(const rect_ca_t *src, rect_ca_t *dst);
+int do_intersect_rect_sp(const rect_sp_t *a, const rect_sp_t *b);
+int get_intersect_rect_sp(const rect_sp_t *a, const rect_sp_t *b, rect_sp_t *r);
+
+void get_sp_fov_rect(
+		const sct_point_sp_t *ptz, const fov_t *fov, rect_sp_t *rfov);
 
 #endif	/*__PTZMAP_H__*/
