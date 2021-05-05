@@ -35,13 +35,13 @@ void map_ptz_to_screen_point(
 	tmp.x = t * srcca.x;
 	tmp.y = t * srcca.y;
 	tmp.z = t * srcca.z;
-	DBG("src (x=%f, y=%f, z=%f, ptz->r=%f)\n", tmp.x, tmp.y, tmp.z, ptz->r);
+//	DBG("src (x=%f, y=%f, z=%f, ptz->r=%f)\n", tmp.x, tmp.y, tmp.z, ptz->r);
 
 	// rotate to top view (orthogonal to z-axis)
 	sct_roll(&tmp, -ptz->phi, &srcca);
 	sct_yaw(&srcca, -ptz->theta, &tmp);
 
-	DBG("top (x=%f, y=%f, z=%f, ptz->r=%f)\n", tmp.x, tmp.y, tmp.z, ptz->r);
+//	DBG("top (x=%f, y=%f, z=%f, ptz->r=%f)\n", tmp.x, tmp.y, tmp.z, ptz->r);
 
 	/*
 	 * tan(fov->h / 2) = (w_fov / 2) / tmp.z
@@ -53,7 +53,7 @@ void map_ptz_to_screen_point(
 	dst->x = (tmp.y + w_fov / 2) * size->w / w_fov;
 	dst->y = (tmp.x + w_fov / 2) * size->h / w_fov;
 
-	DBG("swap-scale (x=%f, y=%f)\n", dst->x, dst->y);
+//	DBG("swap-scale (x=%f, y=%f)\n", dst->x, dst->y);
 
 	if (hflip)
 		dst->x = size->w - dst->x;
@@ -62,7 +62,7 @@ void map_ptz_to_screen_point(
 		dst->y = size->h - dst->y;
 		//dst->y = size->h / 2 - dst->y;
 
-	DBG("flip(h:%d, v:%d) (x=%f, y=%f)\n", hflip, vflip, dst->x, dst->y);
+//	DBG("flip(h:%d, v:%d) (x=%f, y=%f)\n", hflip, vflip, dst->x, dst->y);
 }
 
 void map_screen_to_ptz_point(

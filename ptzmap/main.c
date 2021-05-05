@@ -188,8 +188,8 @@ static void test6(void)
 
 static void test7(void)
 {
-	sct_point_sp_t ptz = { .r = 1.0, .theta = DEG2RAD(90), .phi = DEG2RAD(0) };
-	sct_point_ca_t src = { .x = 100, .y = 900 };
+	sct_point_sp_t ptz = { .r = 1.0, .theta = DEG2RAD(90), .phi = DEG2RAD(90) };
+	sct_point_ca_t src = { .x = 0, .y = 0 };
 	sct_size_t size = { .w = 1000, .h = 1000 };
 	fov_t fov = { .h = DEG2RAD(60), .v= DEG2RAD(60) };
 	sct_point_sp_t dst;
@@ -197,13 +197,37 @@ static void test7(void)
 	dump_point_ca("screen", &src);
 	map_screen_to_ptz_point(&ptz, &src, &size, &fov, &dst);
 	dump_point_sp("ptzsp", &dst);
+#if	0
 	map_ptz_to_screen_point(&ptz, &dst, &size, &fov, 0, 0, &src);
 	dump_point_ca("screen", &src);
+#endif	/*0*/
 
 	for (int i = 0; i < 10; i++) {
 		ptz.theta += DEG2RAD(2);
+		//DBG("============== PTZ(r=%f, phi=%f, theta=%f\n",
+		//		ptz.r, ptz.phi, ptz.theta);
 		map_ptz_to_screen_point(&ptz, &dst, &size, &fov, 0, 0, &src);
-		DBG("============== %d\n", i);
+		dump_point_ca("screen", &src);
+	}
+	for (int i = 0; i < 10; i++) {
+		ptz.theta -= DEG2RAD(2);
+		//DBG("============== PTZ(r=%f, phi=%f, theta=%f\n",
+		//		ptz.r, ptz.phi, ptz.theta);
+		map_ptz_to_screen_point(&ptz, &dst, &size, &fov, 0, 0, &src);
+		dump_point_ca("screen", &src);
+	}
+	for (int i = 0; i < 10; i++) {
+		ptz.theta -= DEG2RAD(2);
+		//DBG("============== PTZ(r=%f, phi=%f, theta=%f\n",
+		//		ptz.r, ptz.phi, ptz.theta);
+		map_ptz_to_screen_point(&ptz, &dst, &size, &fov, 0, 0, &src);
+		dump_point_ca("screen", &src);
+	}
+	for (int i = 0; i < 10; i++) {
+		ptz.theta += DEG2RAD(2);
+		//DBG("============== PTZ(r=%f, phi=%f, theta=%f\n",
+		//		ptz.r, ptz.phi, ptz.theta);
+		map_ptz_to_screen_point(&ptz, &dst, &size, &fov, 0, 0, &src);
 		dump_point_ca("screen", &src);
 	}
 }
