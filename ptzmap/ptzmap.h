@@ -23,6 +23,13 @@ typedef struct {
 } fov_t;
 
 typedef struct {
+	double left;
+	double right;
+	double top;
+	double bottom;
+} rect_2d_t;
+
+typedef struct {
 	sct_point_ca_t lt;
 	sct_point_ca_t rt;
 	sct_point_ca_t lb;
@@ -57,6 +64,7 @@ void map_ptz_to_screen_rect(
 		const sct_size_t *size, const fov_t *fov, int hflip, int vflip,
 		rect_ca_t *dst);
 
+void get_cover_rect_2d(const rect_ca_t *src, rect_2d_t *dst);
 void get_cover_rect_ca(const rect_ca_t *src, rect_ca_t *dst);
 int do_intersect_rect_sp(const rect_sp_t *a, const rect_sp_t *b);
 int get_intersect_rect_sp(const rect_sp_t *a, const rect_sp_t *b, rect_sp_t *r);

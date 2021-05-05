@@ -2,45 +2,6 @@
 #include "ptzmap.h"
 #include "XDebug.h"
 
-#if	0
-/*
- * this equation is drived from an equation of finding the intersection
- * point of a plane and a line in the 3D cartesian coord-system.
- *
- * v1 (line)    : [0, 0, 0] + t[x0, y0, z0]
- * v2 (2d plane): [x1, y1, z1] = r,
- *                where [x1, y1, z1] is converted from [zoom, pan, tilt],
- *                r = ptz->zoom
- *
- * t[x0, y0, z0] dot [x1, y1, z1 ] = r
- * t(x0x1 + y0y1 + z0z1) = r
- * t = r / (x0x1 + y0y1 + z0z1)
- *
- * To get the intersection point, input t to the v1
- *
- * [x, y, z] = [x0 * t, y0 * t, z0 *t]
- */
-void map_ptz_to_screen_3d(
-		const sct_point_sp_t *ptz, const sct_point_sp_t *src,
-		sct_size_t size, sct_point_ca_t *dst)
-{
-	sct_point_ca_t tmp;
-	sct_point_ca_t ptzca;
-
-	/*
-	 * convert points to cartesian coord to calculate intersection point.
-	 */
-	sct_spherical_to_cartesian(ptz, &ptzca);
-	sct_spherical_to_cartesian(src, &tmp);
-
-	double t = ptz->r / (tmp.x * ptzca.x + tmp.y * ptzca.y + tmp.z * ptzca.z);
-
-	dst->x = t * tmp.x;
-	dst->y = t * tmp.y;
-	dst->z = t * tmp.z;
-}
-#endif	/*0*/
-
 /*
  * this equation is drived from an equation of finding the intersection
  * point of a plane and a line in the 3D cartesian coord-system.
@@ -57,242 +18,83 @@ void map_ptz_to_screen_3d(
  * [x, y, z] = [ r * x0 / z0, r * y0 / z0, r * z0 / z0]
  * [x, y, z] = [ r * x0 / z0, r * y0 / z0, r]
  */
-#if	0
 void map_ptz_to_screen_point(
 		const sct_point_sp_t *ptz, const sct_point_sp_t *src,
 		const sct_size_t *size, const fov_t *fov, int hflip, int vflip,
 		sct_point_ca_t *dst)
 {
-	sct_point_ca_t tmpca;
-	sct_point_sp_t tmpsp;
-	sct_point_ca_t tmp;
+	sct_point_ca_t ptzca, srcca, tmp;
 
-	/* Our objective is to project a point on a spherical surface to a 2D
-	 * screen, so we can transform the point which is pointed by PTZ to be
-	 * parallel to the Z-axis to simplify the problem, then we can calculate
-	 * the points on a 2D screen. The transformation is simple, just substract
-	 * ptz's angles from src's angles.
-	 */
-	tmpsp.r = src->r;
-	tmpsp.theta = src->theta - ptz->theta;
-	tmpsp.phi = src->phi - ptz->phi;
-	sct_spherical_to_cartesian(&tmpsp, &tmpca);
-
-	/* intersected point, tmp is on the 2D screen */
-	tmp.x = src->r * tmpca.x / tmpca.z;
-	tmp.y = src->r * tmpca.y / tmpca.z;
-	DBG("src->r=%f, x=%f, y=%f\n", src->r, tmp.x, tmp.y);
-
-	/* scaled final result */
-	dst->x = (tmp.x / src->r) * (size->w / 2) / tan(fov->h / 2) + size->w / 2;
-	if (hflip)
-		dst->x = size->w - dst->x;
-
-	dst->y = (tmp.y / src->r) * (size->h / 2) / tan(fov->h / 2);
-	// w : h = y : y0
-	dst->y = size->w * dst->y / size->h + size->h / 2;
-	if (vflip)
-		dst->y = size->h - dst->y;
-
-	dst->z = src->r;
-}
-#else
-void map_ptz_to_screen_point(
-		const sct_point_sp_t *ptz, const sct_point_sp_t *src,
-		const sct_size_t *size, const fov_t *fov, int hflip, int vflip,
-		sct_point_ca_t *dst)
-{
-	sct_point_ca_t tmpca;
-	sct_point_ca_t ptzca;
-	sct_point_ca_t tmp;
-
-	DBG("src (r=%f, phi=%f, theta=%f)\n",
-			src->r, RAD2DEG(src->phi), RAD2DEG(src->theta));
-
-	sct_spherical_to_cartesian(src, &tmpca);
+	sct_spherical_to_cartesian(src, &srcca);
 	sct_spherical_to_cartesian(ptz, &ptzca);
 
-	DBG("tmpca (x=%f, y=%f, z=%f)\n", tmpca.x, tmpca.y, tmpca.z);
-	DBG("ptzca (x=%f, y=%f, z=%f)\n", ptzca.x, ptzca.y, ptzca.z);
-
-	double t = ptz->r / (tmpca.x * ptzca.x + tmpca.y * ptzca.y + tmpca.z * ptzca.z);
+	double t = ptz->r / (srcca.x * ptzca.x + srcca.y * ptzca.y + srcca.z * ptzca.z);
 
 	// tmp is the intersection point of the screen (r = ptz->r)
 	// and the line (0,0,0) to src
-	tmp.x = t * tmpca.x;
-	tmp.y = t * tmpca.y;
-	tmp.z = t * tmpca.z;
-
-	DBG("tmp (x=%f, y=%f, z=%f)\n", tmp.x, tmp.y, tmp.z);
-	DBG("size (w=%f, h=%f, d=%f\n", size->w, size->h, size->d);
-
-#if	0
-	// tmp is the intersection point of the screen (r = r_scaled)
-	// and the line (0,0,0) to tmp;
-	/*
-	 * ([0,0,0] + t[tmp.x, tmp.y, tmp.z])dot(ptzca.x, ptzca.y, ptzca.z) = r_scaled
-	 */
-	t = r_scaled / (tmp.x * ptzca.x + tmp.y * ptzca.y + tmp.z * ptzca.z);
-
-	dst->x = t * tmp.x;
-	dst->y = t * tmp.y;
-	dst->z = t * tmp.z;
-#endif	/*0*/
-
-	double r_scaled = (size->w / 2) / tan(fov->h / 2);
-
-	DBG("r_scaled=%f\n", r_scaled);
-
-	tmpca.x = r_scaled * tmp.x / src->r;
-	tmpca.y = r_scaled * tmp.y / src->r;
-	tmpca.z = r_scaled * tmp.z / src->r;
+	tmp.x = t * srcca.x;
+	tmp.y = t * srcca.y;
+	tmp.z = t * srcca.z;
+	DBG("src (x=%f, y=%f, z=%f, ptz->r=%f)\n", tmp.x, tmp.y, tmp.z, ptz->r);
 
 	// rotate to top view (orthogonal to z-axis)
-	sct_roll(&tmpca, -ptz->phi, &tmp);
-	DBG("roll (x=%f, y=%f, z=%f) -> (x=%f, y=%f, z=%f)\n",
-			tmpca.x, tmpca.y, tmpca.z, tmp.x, tmp.y, tmp.z);
-	sct_yaw(&tmp, -ptz->theta, &tmpca);
-	DBG("yaw (x=%f, y=%f, z=%f) -> (x=%f, y=%f, z=%f)\n",
-			tmp.x, tmp.y, tmp.z, tmpca.x, tmpca.y, tmpca.z);
+	sct_roll(&tmp, -ptz->phi, &srcca);
+	sct_yaw(&srcca, -ptz->theta, &tmp);
 
-	dst->x = tmpca.y;
-	dst->y = tmpca.x;
-	dst->z = tmpca.z;
+	DBG("top (x=%f, y=%f, z=%f, ptz->r=%f)\n", tmp.x, tmp.y, tmp.z, ptz->r);
 
-#if	0
-	/* scaled final result */
-//	dst->x = (tmp.x / src->r) * (size->w / 2) / tan(fov->h / 2) + size->w / 2;
-	dst->x = (tmp.x / ptz->r) * (size->w / 2) / tan(fov->h / 2);
+	/*
+	 * tan(fov->h / 2) = (w_fov / 2) / tmp.z
+	 */
+	double w_fov = 2 * tmp.z * tan(fov->h / 2);
+
+//	DBG("w_fov = %f, ptz->r = %f, fov->h = %f\n", w_fov, ptz->r, fov->h);
+
+	dst->x = (tmp.y + w_fov / 2) * size->w / w_fov;
+	dst->y = (tmp.x + w_fov / 2) * size->h / w_fov;
+
+	DBG("swap-scale (x=%f, y=%f)\n", dst->x, dst->y);
+
 	if (hflip)
 		dst->x = size->w - dst->x;
 
-	dst->y = (tmp.y / ptz->r) * (size->h / 2) / tan(fov->h / 2);
-	// w : h = y : y0
-//	dst->y = size->w * dst->y / size->h + size->h / 2;
-	dst->y = size->w * dst->y / size->h;
 	if (vflip)
 		dst->y = size->h - dst->y;
+		//dst->y = size->h / 2 - dst->y;
 
-	dst->z = tmp.z;
-	DBG("to screen (r=%f, phi=%f, theta=%f) -> (x=%f, y=%f, z=%f) t=%f\n",
-			tmpsp.r, RAD2DEG(tmpsp.phi), RAD2DEG(tmpsp.theta),
-			dst->x, dst->y, dst->z, t);
-#endif	/*0*/
+	DBG("flip(h:%d, v:%d) (x=%f, y=%f)\n", hflip, vflip, dst->x, dst->y);
 }
-#endif	/*0*/
 
-#if	0
-void map_screen_to_ptz_point(
-		const sct_point_sp_t *ptz, const sct_point_ca_t *src,
-		const sct_size_t *size, const fov_t *fov, sct_point_sp_t *dst)
-{
-	sct_point_ca_t tmpca;
-
-	tmpca.x = src->x - size->w / 2;
-	/* y is increased to down */
-	//tmpca.y = size->h / 2 - src->y;
-	tmpca.y = src->y - size->h / 2;
-	// src->z is ignored and the z should be calculated
-	tmpca.z = size->w / (2 * tan(fov->h / 2));
-	sct_cartesian_to_spherical(&tmpca, dst);
-
-	/*
-	 * Now dst points a point with assuming PTZ's theta and phi are all zero.
-	 * So we should rotate to actul direction.
-	 */
-#if	1
-	DBG("+ dst (r=%f, phi=%f, theta=%f)\n",
-			dst->r, RAD2DEG(dst->phi), RAD2DEG(dst->theta));
-#endif	/*0*/
-	dst->phi += ptz->phi;
-	dst->theta += ptz->theta;
-
-	/*
-	 * dst is always on the PTZ's spherical surface, so the radius should be
-	 * ptz->r
-	 */
-	dst->r = ptz->r;
-	DBG("dst (x=%f, y=%f, z=%f) -> (r=%f, phi=%f, theta=%f)\n",
-			tmpca.x, tmpca.y, tmpca.z,
-			dst->r, RAD2DEG(dst->phi), RAD2DEG(dst->theta));
-}
-#else
 void map_screen_to_ptz_point(
 		const sct_point_sp_t *ptz, const sct_point_ca_t *src,
 		const sct_size_t *size, const fov_t *fov, sct_point_sp_t *dst)
 {
 	sct_point_ca_t tmpca, tmp;
 
-#if	0
-	tmpca.x = src->x - size->w / 2;
-	/* y is increased to down */
-	//tmpca.y = size->h / 2 - src->y;
-	tmpca.y = src->y - size->h / 2;
-	tmpca.z = src->z;
-#else
 	double r_scaled = (size->w / 2) / tan(fov->h / 2);
 
-	DBG("r=%f, r_scaled=%f\n", ptz->r, r_scaled);
-	// by top view, the suface's x-axis should be mapped to y-axis,
-	// the surface's y-axis should be mapped to x-axis,
-	tmpca.x = src->y * ptz->r / r_scaled;
-	tmpca.y = src->x * ptz->r / r_scaled;
+	/*
+	 * We're going to put the screen to be orthogonal to z-axis.
+	 * To do that pan -ptz->phi and tilt -ptz->theta.
+	 * Through the above operation, the suface's x-axis is mapped to y-axis
+	 * and the surface's y-axis is mapped to x-axis,
+	 */
+	tmpca.x = (src->y - size->h / 2) * ptz->r / r_scaled;
+	tmpca.y = (src->x - size->w / 2) * ptz->r / r_scaled;
+
 	// suppose the screen is a part of the surface whose equation is z=ptz->r
 	// later we rotate the point by ptz->phi, ptz->theta
 	tmpca.z = ptz->r;
-#endif	/*0*/
-
-#if	1
 
 	DBG("src (x=%f, y=%f, z=%f)\n", src->x, src->y, src->z);
 	DBG("tmpca (x=%f, y=%f, z=%f)\n", tmpca.x, tmpca.y, tmpca.z);
+
 	// rotate the point by ptz
-	//
 	sct_yaw(&tmpca, ptz->theta, &tmp);
-	DBG("yaw (x=%f, y=%f, z=%f) -> (x=%f, y=%f, z=%f)\n",
-			tmpca.x, tmpca.y, tmpca.z, tmp.x, tmp.y, tmp.z);
-	sct_cartesian_to_spherical(&tmp, dst);
-#if	0
-	DBG("after yaw (x=%f, y=%f, z=%f) -> (r=%f, phi=%f, theta=%f)\n",
-			tmp.x, tmp.y, tmp.z,
-			dst->r, RAD2DEG(dst->phi), RAD2DEG(dst->theta));
-#endif	/*0*/
 	sct_roll(&tmp, ptz->phi, &tmpca);
-	DBG("roll (x=%f, y=%f, z=%f) -> (x=%f, y=%f, z=%f)\n",
-			tmp.x, tmp.y, tmp.z, tmpca.x, tmpca.y, tmpca.z);
 
 	sct_cartesian_to_spherical(&tmpca, dst);
-#if	0
-	DBG("after roll (x=%f, y=%f, z=%f) -> (r=%f, phi=%f, theta=%f)\n",
-			tmpca.x, tmpca.y, tmpca.z,
-			dst->r, RAD2DEG(dst->phi), RAD2DEG(dst->theta));
-#endif	/*0*/
-#endif	/*0*/
-
-#if	0
-	sct_cartesian_to_spherical(&tmpca, dst);
-	DBG("src (x=%f, y=%f, z=%f) -> (r=%f, phi=%f, theta=%f)\n",
-			tmpca.x, tmpca.y, tmpca.z,
-			dst->r, RAD2DEG(dst->phi), RAD2DEG(dst->theta));
-
-	dst->phi += ptz->phi;
-	dst->theta += ptz->theta;
-#endif	/*0*/
-
-	/*
-	 * dst is always on the PTZ's spherical surface, so the radius should be
-	 * ptz->r
-	 */
-	// move the point onto the ptz's spherical surface.
-//	dst->r = ptz->r;
-	dst->r = 1.0;
-	DBG("ptz->r=%f, dst->r=%f\n", ptz->r, dst->r);
-
-	DBG("final (x=%f, y=%f, z=%f) -> (r=%f, phi=%f, theta=%f)\n",
-			tmpca.x, tmpca.y, tmpca.z,
-			dst->r, RAD2DEG(dst->phi), RAD2DEG(dst->theta));
 }
-#endif	/*0*/
 
 /*
  * test the point's angles are in between ptz->center +/- fov angles
@@ -321,10 +123,42 @@ void map_ptz_to_screen_rect(
 		const sct_size_t *size, const fov_t *fov, int hflip, int vflip,
 		rect_ca_t *dst)
 {
+#if	0
 	map_ptz_to_screen_point(ptz, &src->lt, size, fov, hflip, vflip, &dst->lt);
-	map_ptz_to_screen_point(ptz, &src->rt, size, fov, hflip, vflip, &dst->rt);
 	map_ptz_to_screen_point(ptz, &src->lb, size, fov, hflip, vflip, &dst->lb);
+	map_ptz_to_screen_point(ptz, &src->rt, size, fov, hflip, vflip, &dst->rt);
 	map_ptz_to_screen_point(ptz, &src->rb, size, fov, hflip, vflip, &dst->rb);
+#else
+	if (hflip && vflip) {
+		map_ptz_to_screen_point(ptz, &src->lt, size, fov, hflip, vflip, &dst->rb);
+		map_ptz_to_screen_point(ptz, &src->lb, size, fov, hflip, vflip, &dst->rt);
+		map_ptz_to_screen_point(ptz, &src->rt, size, fov, hflip, vflip, &dst->lb);
+		map_ptz_to_screen_point(ptz, &src->rb, size, fov, hflip, vflip, &dst->lt);
+	} else if (hflip) {
+		map_ptz_to_screen_point(ptz, &src->lt, size, fov, hflip, vflip, &dst->rt);
+		map_ptz_to_screen_point(ptz, &src->lb, size, fov, hflip, vflip, &dst->rb);
+		map_ptz_to_screen_point(ptz, &src->rt, size, fov, hflip, vflip, &dst->lt);
+		map_ptz_to_screen_point(ptz, &src->rb, size, fov, hflip, vflip, &dst->lb);
+	} else if (vflip) {
+		map_ptz_to_screen_point(ptz, &src->lt, size, fov, hflip, vflip, &dst->lb);
+		map_ptz_to_screen_point(ptz, &src->lb, size, fov, hflip, vflip, &dst->lt);
+		map_ptz_to_screen_point(ptz, &src->rt, size, fov, hflip, vflip, &dst->rb);
+		map_ptz_to_screen_point(ptz, &src->rb, size, fov, hflip, vflip, &dst->rt);
+	} else {
+		map_ptz_to_screen_point(ptz, &src->lt, size, fov, hflip, vflip, &dst->lt);
+		map_ptz_to_screen_point(ptz, &src->lb, size, fov, hflip, vflip, &dst->lb);
+		map_ptz_to_screen_point(ptz, &src->rt, size, fov, hflip, vflip, &dst->rt);
+		map_ptz_to_screen_point(ptz, &src->rb, size, fov, hflip, vflip, &dst->rb);
+	}
+#endif	/*0*/
+}
+
+void get_cover_rect_2d(const rect_ca_t *src, rect_2d_t *dst)
+{
+	dst->left = MIN(src->lt.x, src->lb.x);
+	dst->top = MIN(src->lt.y, src->rt.y);
+	dst->right = MAX(src->rt.x, src->rb.x);
+	dst->bottom = MAX(src->lb.y, src->rb.y);
 }
 
 void get_cover_rect_ca(const rect_ca_t *src, rect_ca_t *dst)
@@ -370,3 +204,24 @@ void get_sp_fov_rect(
 	rfov->lt.r = rfov->rt.r = rfov->lb.r = rfov->rb.r = ptz->r;
 }
 
+int do_union_rect_2d(const rect_2d_t *a, const rect_2d_t *b)
+{
+	return
+		MAX(0, MIN(a->right, b->right) - MAX(a->left, b->left)) &&
+		MAX(0, MIN(a->bottom, b->bottom) - MAX(a->top, b->top));
+}
+
+int get_union_rect_2d(const rect_2d_t *a, const rect_2d_t *b, rect_2d_t *r)
+{
+	if (!do_union_rect_2d(a, b)) {
+		r->left = r->right = r->top = r->bottom = 0.0;
+		return 0;
+	}
+
+	r->left = MAX(a->left, b->left);
+	r->top = MAX(a->top, b->top);
+	r->right = MIN(a->right, b->right);
+	r->bottom = MIN(a->bottom, b->bottom);
+
+	return 1;
+}
